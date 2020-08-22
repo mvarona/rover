@@ -38,7 +38,7 @@ def ensureString(msg):
 def showInitialMenu():
 	print("*****")
 	print("Welcome to my search engine")
-	print("Elena Reina Muñoz")
+	print("Mario Varona Bueno")
 	print("*****")
 	if (len(sys.argv) != (NUM_ARGS + 1)):
 		print("Please, specify the directory where you want to search")
