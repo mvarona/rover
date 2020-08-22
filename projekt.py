@@ -186,6 +186,18 @@ def calculateIdfs(tokenList, terms, terms_stem, ids):
 
 		i = i + 1
 
+def addQueryDocument(ids, tokenList, terms, terms_stem):
+	newKey = max(list(ids.keys())) + 1
+	ids[newKey] = ("Query (" + ' '.join(terms) + ")")
+
+	for term in terms_stem:
+		if (term in tokenList):
+			tokenList[term].append(newKey)
+		else:
+			tokenList[term] = newKey
+
+	return ids, tokenList
+
 
 # Entry point:
 
@@ -195,7 +207,9 @@ ids = assignIDsToEachFile(files)
 stemmer = initStemmer(lan)
 tokenList = createTokenListForFiles(files, dirName, stemmer, ids)
 terms, terms_stem = createSearchTerms(stemmer)
-print(terms, terms_stem)
+#print(terms, terms_stem)
+#print(tokenList)
+#tfs = calculateTfs(tokenList, terms, terms_stem, dirName, ids)
+#idfs = calculateIdfs(tokenList, terms, terms_stem, ids)
+ids, tokenList = addQueryDocument(ids, tokenList, terms, terms_stem)
 print(tokenList)
-tfs = calculateTfs(tokenList, terms, terms_stem, dirName, ids)
-idfs = calculateIdfs(tokenList, terms, terms_stem, ids)
