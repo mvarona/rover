@@ -131,11 +131,15 @@ def createTokenListForFiles(files, dirName, stemmer, ids):
 	
 	return tokenList
 
-def listFrequencyForFile(dirName, file):
-	with open(dirName + os.sep + file) as f:
-	    passage = f.read().lower()
+def listFrequencyForFile(dirName, file, isQuery):
+	words = []
+	if (isQuery == True):
+		words = re.findall(r'\w+', file)
+	else:
+		with open(dirName + os.sep + file) as f:
+		    passage = f.read().lower()
+		words = re.findall(r'\w+', passage)
 
-	words = re.findall(r'\w+', passage)
 	words_lower = [word for word in words if (len(word) > MINIMUM_LENGTH_TOKEN)]
 	frequency = Counter(words_lower)
 	return frequency
@@ -147,28 +151,32 @@ def createSearchTerms(stemmer):
 		terms_stem.append(stemmer.stem(term))
 	return terms, terms_stem
 
-def calculateTfForFile(term, dirName, file):
-	word_frequencies = listFrequencyForFile(dirName, file)
+def calculateTfForFile(term, dirName, file, isQuery):
+	word_frequencies = listFrequencyForFile(dirName, file, isQuery)
 	term_frequency = word_frequencies[term]
 	max_frequency = max(list(word_frequencies.values()))
 	tf = term_frequency / max_frequency
 	return tf
 
-def calculateTfs(tokenList, terms, terms_stem, dirName, ids):
+def calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids):
 	i = 0
-	for term in terms:
-		print("TF for term '" + term + "':")
 
+	for term in terms:
+		
 		if (terms_stem[i] in tokenList):
-			files_with_term = tokenList[terms_stem[i]]
+			files_with_term = []
+			files_with_term.append(tokenList[terms_stem[i]])
+
 			for file_with_term in files_with_term:
-				print("\tDocument '" + ids[file_with_term] + "':")
 				file = ids[file_with_term]
-				print("\t\t" + str(calculateTfForFile(term, dirName, file)))
-		else:
-			print("\tThis term has not been included in the inverted index")
+				isQuery = False
+				if (file_with_term == max(list(ids.keys()))):
+					isQuery = True
+				relevance[file_with_term][terms_stem[i]] = calculateTfForFile(term, dirName, file, isQuery)
 
 		i = i + 1
+
+	return relevance
 
 def calculateIdfs(tokenList, terms, terms_stem, ids):
 	i = 0
@@ -191,13 +199,19 @@ def addQueryDocument(ids, tokenList, terms, terms_stem):
 	ids[newKey] = ("Query (" + ' '.join(terms) + ")")
 
 	for term in terms_stem:
-		if (term in tokenList):
-			tokenList[term].append(newKey)
-		else:
-			tokenList[term] = newKey
+		if (term not in tokenList):
+			tokenList[term] = []
+		tokenList[term].append(newKey)
 
 	return ids, tokenList
 
+def createRelevanceMatrix(tokenList, ids):
+	relevance = dict()
+	for doc in ids:
+		relevance[doc] = dict()
+		for term in tokenList:
+			relevance[doc][term] = 0
+	return relevance
 
 # Entry point:
 
@@ -209,7 +223,9 @@ tokenList = createTokenListForFiles(files, dirName, stemmer, ids)
 terms, terms_stem = createSearchTerms(stemmer)
 #print(terms, terms_stem)
 #print(tokenList)
-#tfs = calculateTfs(tokenList, terms, terms_stem, dirName, ids)
-#idfs = calculateIdfs(tokenList, terms, terms_stem, ids)
 ids, tokenList = addQueryDocument(ids, tokenList, terms, terms_stem)
-print(tokenList)
+#print(tokenList)
+relevance = createRelevanceMatrix(tokenList, ids)
+#tfs = calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids)
+#idfs = calculateIdfs(relevance, tokenList, terms, terms_stem, ids)
+print(relevance)
