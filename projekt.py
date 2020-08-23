@@ -21,25 +21,22 @@ LAN_GERMAN = 2
 MINIMUM_LENGTH_TOKEN = 3
 MAX_DECIMAL_FLOAT = 4
 
-# Global variables:
-
-
 # Functions:
 
-def ensureInputRange(msg, min, max):
-	userInput = int(input(msg))
-	while userInput > max or userInput < min:
-		userInput = int(input(msg))
+def ensure_input_range(msg, min, max):
+	user_input = int(input(msg))
+	while user_input > max or user_input < min:
+		user_input = int(input(msg))
 
-	return userInput
+	return user_input
 
-def ensureString(msg):
-	userInput = str(input(msg))
-	while (len(userInput)) == 0:
-		userInput = str(input(msg))
-	return userInput
+def ensure_string(msg):
+	user_input = str(input(msg))
+	while (len(user_input)) == 0:
+		user_input = str(input(msg))
+	return user_input
 
-def showInitialMenu():
+def show_initial_menu():
 	print("*****")
 	print("Welcome to my search engine")
 	print("Mario Varona Bueno")
@@ -51,24 +48,23 @@ def showInitialMenu():
 		print("Quitting...")
 		sys.exit(2)
 	else:
-		dirName = sys.argv[1]
-		lan = ensureInputRange("Specify the language of your query (English = 1, German = 2): ", LAN_ENGLISH, LAN_GERMAN)
+		dir_name = sys.argv[1]
+		lan = ensure_input_range("Specify the language of your query (English = 1, German = 2): ", LAN_ENGLISH, LAN_GERMAN)
 		print("Creating inverted index...")
 		print("Please wait...")
-		return dirName, lan
+		return dir_name, lan
 
-def getFilesFromAskedDir(dir):
+def get_files_from_dir(dir):
 	files = [f for f in os.listdir(dir)]
-	exclude = ".DS_Store" # We exclude macOS config file
-	filesCleaned = []
+	files_cleaned = []
 
 	for file in files:
-		if file not in exclude:
-			filesCleaned.append(file)
+		if file.endswith(".txt"):
+			files_cleaned.append(file)
 	
-	return filesCleaned
+	return files_cleaned
 
-def assignIDsToEachFile(files):
+def assign_ids_to_each_file(files):
 	i = 0
 	ids = {}
 	for file in files:
@@ -77,7 +73,7 @@ def assignIDsToEachFile(files):
 
 	return ids
 
-def initStemmer(lan):
+def init_stemmer(lan):
 	# We download here the 'punkt' module for NLTK, instead of asking the user to do on the install
 	# Module ssl and the following try-else block is needed, as the url to download the 'punkt' library throws a SSL exception (caused by its domain certificate)
 
@@ -97,7 +93,7 @@ def initStemmer(lan):
 
 	return stemmer
 
-def stemSentence(sentence, stemmer):
+def stem_sentence(sentence, stemmer):
 	token_words = word_tokenize(sentence)
 	stem_sentence = []
 	for word in token_words:
@@ -107,40 +103,40 @@ def stemSentence(sentence, stemmer):
 	
 	return stem_sentence
 
-def createTokenListForFile(fileName, dirName, stemmer):
+def create_token_list_for_file(file_name, dir_name, stemmer):
 
-	file = open(dirName + os.sep + fileName)
+	file = open(dir_name + os.sep + file_name)
 	my_lines_list = [line.lower() for line in file.readlines() if line.strip()]
-	tokenizedStemmedFile = []
+	tokenized_stemmed_file = []
 	i = 0
 	for line in my_lines_list:
-		tokenizedStemmedFile.extend(stemSentence(my_lines_list[i], stemmer))
+		tokenized_stemmed_file.extend(stem_sentence(my_lines_list[i], stemmer))
 		i = i + 1
 
-	return tokenizedStemmedFile
+	return tokenized_stemmed_file
 
-def createTokenListForFiles(files, dirName, stemmer, ids):
-	tokenList = {}
+def create_token_list_for_files(files, dir_name, stemmer, ids):
+	token_list = {}
 	i = 0
 	for file in files:
-		tokenizedFile = list(set(createTokenListForFile(file, dirName, stemmer)))
+		tokenized_file = list(set(create_token_list_for_file(file, dir_name, stemmer)))
 
-		for word in tokenizedFile:
-			if not tokenList.get(word):
-				tokenList[word] = []
+		for word in tokenized_file:
+			if not token_list.get(word):
+				token_list[word] = []
 
-			tokenList[word].append(list(ids.keys())[i])
+			token_list[word].append(list(ids.keys())[i])
 
 		i = i + 1
 	
-	return tokenList
+	return token_list
 
-def listFrequencyForFile(dirName, file, isQuery):
+def list_frequency_for_file(dir_name, file, is_query):
 	words = []
-	if (isQuery == True):
+	if (is_query == True):
 		words = re.findall(r'\w+', file)
 	else:
-		with open(dirName + os.sep + file) as f:
+		with open(dir_name + os.sep + file) as f:
 		    passage = f.read().lower()
 		words = re.findall(r'\w+', passage)
 
@@ -148,75 +144,74 @@ def listFrequencyForFile(dirName, file, isQuery):
 	frequency = Counter(words_lower)
 	return frequency
 
-def createSearchTerms(stemmer):
-	terms = ensureString("Specify your search terms with a space ( ) as separator: ").lower().split(" ")
+def create_search_terms(stemmer):
+	terms = ensure_string("Specify your search terms with a space ( ) as separator: ").lower().split(" ")
 	terms_stem = []
 	for term in terms:
 		terms_stem.append(stemmer.stem(term))
 	return terms, terms_stem
 
-def calculateTfForFile(term, dirName, file, isQuery):
-	word_frequencies = listFrequencyForFile(dirName, file, isQuery)
+def calculate_tf_for_file(term, dir_name, file, is_query):
+	word_frequencies = list_frequency_for_file(dir_name, file, is_query)
 	term_frequency = word_frequencies[term]
 	max_frequency = max(list(word_frequencies.values()))
 	tf = round(term_frequency / max_frequency, MAX_DECIMAL_FLOAT)
 	return tf
 
-def calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids):
+def calculate_tfs(relevance, token_list, terms, terms_stem, dir_name, ids):
 	i = 0
 
 	for term in terms:
 		
-		if (terms_stem[i] in tokenList):
-			files_with_term = tokenList[terms_stem[i]]
+		if (terms_stem[i] in token_list):
+			files_with_term = token_list[terms_stem[i]]
 
 			for file_with_term in files_with_term:
 				file = ids[file_with_term]
-				isQuery = False
+				is_query = False
 				if (file_with_term == max(list(ids.keys()))):
-					isQuery = True
-				relevance[file_with_term][terms_stem[i]] = calculateTfForFile(term, dirName, file, isQuery)
+					is_query = True
+				relevance[file_with_term][terms_stem[i]] = calculate_tf_for_file(term, dir_name, file, is_query)
 
 		i = i + 1
 
 	return relevance
 
-def calculateIdfs(relevance, tokenList, terms, terms_stem, ids):
+def calculate_idfs(relevance, token_list, terms, terms_stem, ids):
 	i = 0
-	numDocs = len(ids)
+	num_docs = len(ids)
 	for term in terms:
-		if (terms_stem[i] in tokenList):
-			files_with_term = tokenList[terms_stem[i]]
+		if (terms_stem[i] in token_list):
+			files_with_term = token_list[terms_stem[i]]
 			num_files_with_term = len(files_with_term)
-			idf = math.log(numDocs / num_files_with_term)
-			for doc in range(0, numDocs):
-				#relevance[doc][terms_stem[i]] = idf
+			idf = math.log(num_docs / num_files_with_term)
+			for doc in range(0, num_docs):
 				relevance[doc][terms_stem[i]] = round(relevance[doc][terms_stem[i]] * idf, MAX_DECIMAL_FLOAT)
 		
 		i = i + 1
 
 	return relevance
 
-def addQueryDocument(ids, tokenList, terms, terms_stem):
-	newKey = max(list(ids.keys())) + 1
-	ids[newKey] = ("Query (" + ' '.join(terms) + ")")
+def add_query_document(ids, token_list, terms, terms_stem):
+	new_key = max(list(ids.keys())) + 1
+	ids[new_key] = ("Query (" + ' '.join(terms) + ")")
 
 	for term in terms_stem:
-		if (term not in tokenList):
-			tokenList[term] = []
-		tokenList[term].append(newKey)
+		if (term not in token_list):
+			token_list[term] = []
+		token_list[term].append(new_key)
 
-	return ids, tokenList
+	return ids, token_list
 
-def createRelevanceMatrix(tokenList, ids):
+def create_relevance_matrix(token_list, ids):
 	relevance = dict()
 	for doc in ids:
 		relevance[doc] = dict()
-		for term in tokenList:
+		for term in token_list:
 			relevance[doc][term] = 0
 	return relevance
 
-def printRelevance(relevance):
+def print_relevance(relevance):
 	for doc in range(0, len(relevance)):
 		print("Document " + str(doc) + ":")
 		for term in relevance[0]:
@@ -226,11 +221,11 @@ def printRelevance(relevance):
 def magnitude(x):
 	return round(math.sqrt(sum(i**2 for i in x.values())), MAX_DECIMAL_FLOAT)
 
-def multiplyVectors(a, b):
+def multiply_vectors(a, b):
 	c = a.dot(b)
 	return c
 
-def createSimilarity(relevance):
+def create_similarity(relevance):
 	similarity = {}
 	query = len(relevance) - 1
 
@@ -238,41 +233,41 @@ def createSimilarity(relevance):
 		similarity[doc] = 0
 
 	for doc in range(0, len(relevance) - 1):
-		queryVector = np.array(list(relevance[query].values()))
-		docVector = np.array(list(relevance[doc].values()))
-		vectorProduct = multiplyVectors(queryVector, docVector)
-		magnitudeProduct = magnitude(relevance[query]) * magnitude(relevance[doc])
-		if (magnitudeProduct == 0):
+		query_vector = np.array(list(relevance[query].values()))
+		doc_vector = np.array(list(relevance[doc].values()))
+		vector_product = multiply_vectors(query_vector, doc_vector)
+		magnitude_product = magnitude(relevance[query]) * magnitude(relevance[doc])
+		if (magnitude_product == 0):
 			similarity[doc] = 0
 		else:
-			similarity[doc] = round(vectorProduct / magnitudeProduct, MAX_DECIMAL_FLOAT)
+			similarity[doc] = round(vector_product / magnitude_product, MAX_DECIMAL_FLOAT)
 
 	return similarity
 
-def orderSimilarity(similarity):
-	orderedSimilarity = OrderedDict(sorted(similarity.items(), key = itemgetter(1), reverse = True))
-	return orderedSimilarity
+def order_similarity(similarity):
+	ordered_similarity = OrderedDict(sorted(similarity.items(), key = itemgetter(1), reverse = True))
+	return ordered_similarity
 
-def printSimilarity(orderedSimilarity, ids):
+def print_similarity(ordered_similarity, ids):
 	print("*** Most relevant files for query: ***")
 	print("**** (According to its cosine similarity value) ****")
 	print("")
 
 	i = 0
-	for orderedResult in orderedSimilarity:
-		print(str(i + 1) + ". File: " + ids[orderedResult] + ". Similarity with query: " + str(orderedSimilarity[orderedResult]) + ". ID: " + str(orderedResult))
+	for ordered_result in ordered_similarity:
+		print(str(i + 1) + ". File: " + ids[ordered_result] + ". Similarity with query: " + str(ordered_similarity[ordered_result]) + ". ID: " + str(ordered_result))
 		i = i + 1
 
-def printContexts(orderedSimilarity, dirName, files, terms):
+def print_contexts(ordered_similarity, dir_name, files, terms):
 	print("*** Results with context: ***")
 	print("")
-	startBold = "\033[1m"
-	endBold = "\033[0;0m"
+	start_bold = "\033[1m"
+	end_bold = "\033[0;0m"
 	
-	for orderedResult in orderedSimilarity:
-		if (orderedSimilarity[orderedResult] > 0):
-			print("File  " + files[orderedResult] + ":")
-			file = open(dirName + os.sep + files[orderedResult])		
+	for ordered_result in ordered_similarity:
+		if (ordered_similarity[ordered_result] > 0):
+			print("File  " + files[ordered_result] + ":")
+			file = open(dir_name + os.sep + files[ordered_result])		
 
 			for term in terms:
 				lines_with_occurrence = [line.lower() for line in file.readlines() if (line.strip() and term in line.lower())]
@@ -283,13 +278,13 @@ def printContexts(orderedSimilarity, dirName, files, terms):
 					print("")
 					for word in line.split(' '):
 						if (term in word):
-							print(startBold + word + endBold + " ", end='')
+							print(start_bold + word + end_bold + " ", end='')
 						else:
 							print(word + " ", end='')
 					i = i + 1
 	print("")
 
-def showEnd():
+def show_end():
 	print("")
 	print("We hope we've been useful")
 	print("Until next search!")
@@ -298,18 +293,18 @@ def showEnd():
 
 # Entry point:
 
-dirName, lan = showInitialMenu()
-files = getFilesFromAskedDir(dirName)
-ids = assignIDsToEachFile(files)
-stemmer = initStemmer(lan)
-tokenList = createTokenListForFiles(files, dirName, stemmer, ids)
-terms, terms_stem = createSearchTerms(stemmer)
-ids, tokenList = addQueryDocument(ids, tokenList, terms, terms_stem)
-relevance = createRelevanceMatrix(tokenList, ids)
-relevance = calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids)
-relevance = calculateIdfs(relevance, tokenList, terms, terms_stem, ids)
-similarity = createSimilarity(relevance)
-orderedSimilarity = orderSimilarity(similarity)
-printSimilarity(orderedSimilarity, ids)
-printContexts(orderedSimilarity, dirName, files, terms)
-showEnd()
+dir_name, lan = show_initial_menu()
+files = get_files_from_dir(dir_name)
+ids = assign_ids_to_each_file(files)
+stemmer = init_stemmer(lan)
+token_list = create_token_list_for_files(files, dir_name, stemmer, ids)
+terms, terms_stem = create_search_terms(stemmer)
+ids, token_list = add_query_document(ids, token_list, terms, terms_stem)
+relevance = create_relevance_matrix(token_list, ids)
+relevance = calculate_tfs(relevance, token_list, terms, terms_stem, dir_name, ids)
+relevance = calculate_idfs(relevance, token_list, terms, terms_stem, ids)
+similarity = create_similarity(relevance)
+ordered_similarity = order_similarity(similarity)
+print_similarity(ordered_similarity, ids)
+print_contexts(ordered_similarity, dir_name, files, terms)
+show_end()

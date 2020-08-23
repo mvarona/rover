@@ -17,7 +17,7 @@ nltk.download('punkt')
 
 stemmer = SnowballStemmer("english")
 
-def stemSentence(sentence):
+def stem_sentence(sentence):
     token_words = word_tokenize(sentence)
     stem_sentence = []
     for word in token_words:
@@ -26,19 +26,19 @@ def stemSentence(sentence):
     
     return stem_sentence
 
-def createTokenListForFile(fileName):
+def create_token_list_for_file(file_name):
 
-	file = open(fileName)
+	file = open(file_name)
 	my_lines_list = [line.lower() for line in file.readlines() if line.strip()]
-	tokenizedStemmedFile = []
+	tokenized_stemmed_file = []
 	i = 0
 	for line in my_lines_list:
-		tokenizedStemmedFile.extend(stemSentence(my_lines_list[i]))
+		tokenized_stemmed_file.extend(stem_sentence(my_lines_list[i]))
 		i = i + 1
 
-	return tokenizedStemmedFile
+	return tokenized_stemmed_file
 
-def listFrequencyForFile(file):
+def list_frequency_for_file(file):
 	with open(file) as f:
 	    passage = f.read().lower()
 
@@ -47,7 +47,7 @@ def listFrequencyForFile(file):
 	frequency = Counter(words_lower)
 	return frequency
 
-def multiplyVectors(a, b):
+def multiply_vectors(a, b):
 	c = a.dot(b)
 	return c
 
@@ -56,5 +56,5 @@ l2 = {"a": 1, "b": 1, "c": 0, "d": 4, "e": 0, "f": 0, "g": 0, "h": 1}
 
 a = np.array(list(l1.values()))
 b = np.array(list(l2.values()))
-c = multiplyVectors(a, b)
+c = multiply_vectors(a, b)
 print(c)
