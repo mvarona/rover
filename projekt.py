@@ -164,8 +164,7 @@ def calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids):
 	for term in terms:
 		
 		if (terms_stem[i] in tokenList):
-			files_with_term = []
-			files_with_term.append(tokenList[terms_stem[i]])
+			files_with_term = tokenList[terms_stem[i]]
 
 			for file_with_term in files_with_term:
 				file = ids[file_with_term]
@@ -178,21 +177,21 @@ def calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids):
 
 	return relevance
 
-def calculateIdfs(tokenList, terms, terms_stem, ids):
+def calculateIdfs(relevance, tokenList, terms, terms_stem, ids):
 	i = 0
 	numDocs = len(ids)
 	for term in terms:
-		print("IDF for term '" + term + "':")
-
 		if (terms_stem[i] in tokenList):
 			files_with_term = tokenList[terms_stem[i]]
 			num_files_with_term = len(files_with_term)
 			idf = math.log(numDocs / num_files_with_term)
-			print("\tidf = " + str(idf))
-		else:
-			print("\tThis term has not been included in the inverted index")
-
+			for doc in range(0, numDocs):
+				#relevance[doc][terms_stem[i]] = idf
+				relevance[doc][terms_stem[i]] = relevance[doc][terms_stem[i]] * idf
+		
 		i = i + 1
+
+	return relevance
 
 def addQueryDocument(ids, tokenList, terms, terms_stem):
 	newKey = max(list(ids.keys())) + 1
@@ -213,6 +212,13 @@ def createRelevanceMatrix(tokenList, ids):
 			relevance[doc][term] = 0
 	return relevance
 
+def printRelevance(relevance):
+	for doc in range(0, len(relevance)):
+		print("Document " + str(doc) + ":")
+		for term in relevance[0]:
+			print(str(relevance[doc][term]) + "  ", end='')
+		print("\n")
+
 # Entry point:
 
 dirName, lan = showInitialMenu()
@@ -221,11 +227,8 @@ ids = assignIDsToEachFile(files)
 stemmer = initStemmer(lan)
 tokenList = createTokenListForFiles(files, dirName, stemmer, ids)
 terms, terms_stem = createSearchTerms(stemmer)
-#print(terms, terms_stem)
-#print(tokenList)
 ids, tokenList = addQueryDocument(ids, tokenList, terms, terms_stem)
-#print(tokenList)
 relevance = createRelevanceMatrix(tokenList, ids)
-#tfs = calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids)
-#idfs = calculateIdfs(relevance, tokenList, terms, terms_stem, ids)
-print(relevance)
+relevance = calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids)
+relevance = calculateIdfs(relevance, tokenList, terms, terms_stem, ids)
+printRelevance(relevance)
