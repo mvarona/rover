@@ -258,7 +258,7 @@ def printSimilarity(similarity, files):
 	
 	i = 0
 	for orderedResult in orderedSimilarity:
-		print(str(i + 1) + ". File: " + files[orderedResult] + ". Similarity with query: " + str(orderedSimilarity[orderedResult]))
+		print(str(i + 1) + ". File: " + files[orderedResult] + ". Similarity with query: " + str(orderedSimilarity[orderedResult]) + ". ID: " + str(orderedResult))
 		i = i + 1
 
 # Entry point:
