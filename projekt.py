@@ -249,17 +249,52 @@ def createSimilarity(relevance):
 
 	return similarity
 
-def printSimilarity(similarity, files):
+def orderSimilarity(similarity):
+	orderedSimilarity = OrderedDict(sorted(similarity.items(), key = itemgetter(1), reverse = True))
+	return orderedSimilarity
+
+def printSimilarity(orderedSimilarity, ids):
 	print("*** Most relevant files for query: ***")
 	print("**** (According to its cosine similarity value) ****")
 	print("")
 
-	orderedSimilarity = OrderedDict(sorted(similarity.items(), key = itemgetter(1), reverse = True))
-	
 	i = 0
 	for orderedResult in orderedSimilarity:
-		print(str(i + 1) + ". File: " + files[orderedResult] + ". Similarity with query: " + str(orderedSimilarity[orderedResult]) + ". ID: " + str(orderedResult))
+		print(str(i + 1) + ". File: " + ids[orderedResult] + ". Similarity with query: " + str(orderedSimilarity[orderedResult]) + ". ID: " + str(orderedResult))
 		i = i + 1
+
+def printContexts(orderedSimilarity, dirName, files, terms):
+	print("*** Results with context: ***")
+	print("")
+	startBold = "\033[1m"
+	endBold = "\033[0;0m"
+	
+	for orderedResult in orderedSimilarity:
+		if (orderedSimilarity[orderedResult] > 0):
+			print("File  " + files[orderedResult] + ":")
+			file = open(dirName + os.sep + files[orderedResult])		
+
+			for term in terms:
+				lines_with_occurrence = [line.lower() for line in file.readlines() if (line.strip() and term in line.lower())]
+				i = 1
+				for line in lines_with_occurrence:
+					print("")
+					print("\tOccurrence #" + str(i) + ":")
+					print("")
+					for word in line.split(' '):
+						if (term in word):
+							print(startBold + word + endBold + " ", end='')
+						else:
+							print(word + " ", end='')
+					i = i + 1
+	print("")
+
+def showEnd():
+	print("")
+	print("We hope we've been useful")
+	print("Until next search!")
+	print("")
+
 
 # Entry point:
 
@@ -274,4 +309,7 @@ relevance = createRelevanceMatrix(tokenList, ids)
 relevance = calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids)
 relevance = calculateIdfs(relevance, tokenList, terms, terms_stem, ids)
 similarity = createSimilarity(relevance)
-printSimilarity(similarity, files)
+orderedSimilarity = orderSimilarity(similarity)
+printSimilarity(orderedSimilarity, ids)
+printContexts(orderedSimilarity, dirName, files, terms)
+showEnd()
