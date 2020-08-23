@@ -1,13 +1,54 @@
-# Imports:
+# Imports and imports-needed constants and functions:
 
 import os
 import re
 import sys
-import ssl
-import nltk
 import math
-import progressbar
-import numpy as np
+import subprocess
+
+ANSWER_YES_INSTALL = "y"
+ANSWER_NO_INSTALL = "n"
+
+def ensure_string_range(msg, answer1, answer2):
+	user_input = str(input(msg))
+	while (len(user_input) == 0 or (answer1 not in user_input.lower() and answer2 not in user_input.lower())):
+		user_input = str(input(msg))
+	return user_input
+
+def install(package):
+	print("This program needs the package " + package + ", and it appears not to be installed on your system")
+	installation = ensure_string_range("Would you like this program to install it? Otherwise, you will have to do it manually (y/n): ", "y", "n")
+	if (installation == ANSWER_YES_INSTALL):
+		subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+	else:
+		print("Please install manually the package " + package)
+		print("Quitting...")
+		sys.exit(2)
+
+try:
+	import ssl
+except ImportError as e:
+	install("ssl")
+	import ssl
+
+try:
+	import nltk
+except ImportError as e:
+	install("nltk")
+	import nltk
+
+try:
+	import progressbar
+except ImportError as e:
+	install("progressbar")
+	import progressbar
+
+try:
+	import numpy as np
+except ImportError as e:
+	install("numpy")
+	import numpy as np
+
 from collections import Counter
 from operator import itemgetter
 from collections import OrderedDict
@@ -33,7 +74,7 @@ def ensure_input_range(msg, min, max):
 
 def ensure_string(msg):
 	user_input = str(input(msg))
-	while (len(user_input)) == 0:
+	while (len(user_input) == 0):
 		user_input = str(input(msg))
 	return user_input
 
@@ -263,13 +304,13 @@ def print_similarity(ordered_similarity, ids):
 
 def print_contexts(ordered_similarity, dir_name, files, terms):
 	print("*** Results with context: ***")
-	print("")
+	
 	start_bold = "\033[1m"
 	end_bold = "\033[0;0m"
 	
 	for ordered_result in ordered_similarity:
 		if (ordered_similarity[ordered_result] > 0):
-			print("File  " + files[ordered_result] + ":")
+			print("\nFile  " + files[ordered_result] + ":")
 			file = open(dir_name + os.sep + files[ordered_result])		
 
 			for term in terms:
@@ -292,7 +333,6 @@ def show_end():
 	print("We hope we've been useful")
 	print("Until next search!")
 	print("")
-
 
 # Entry point:
 
