@@ -8,8 +8,10 @@ import nltk
 import math
 import numpy as np
 from collections import Counter
-from nltk.tokenize import sent_tokenize, word_tokenize
+from operator import itemgetter
+from collections import OrderedDict
 from nltk.stem.snowball import SnowballStemmer
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 # Constants:
 
@@ -17,6 +19,7 @@ NUM_ARGS = 1
 LAN_ENGLISH = 1
 LAN_GERMAN = 2
 MINIMUM_LENGTH_TOKEN = 3
+MAX_DECIMAL_FLOAT = 4
 
 # Global variables:
 
@@ -156,7 +159,7 @@ def calculateTfForFile(term, dirName, file, isQuery):
 	word_frequencies = listFrequencyForFile(dirName, file, isQuery)
 	term_frequency = word_frequencies[term]
 	max_frequency = max(list(word_frequencies.values()))
-	tf = term_frequency / max_frequency
+	tf = round(term_frequency / max_frequency, MAX_DECIMAL_FLOAT)
 	return tf
 
 def calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids):
@@ -188,7 +191,7 @@ def calculateIdfs(relevance, tokenList, terms, terms_stem, ids):
 			idf = math.log(numDocs / num_files_with_term)
 			for doc in range(0, numDocs):
 				#relevance[doc][terms_stem[i]] = idf
-				relevance[doc][terms_stem[i]] = relevance[doc][terms_stem[i]] * idf
+				relevance[doc][terms_stem[i]] = round(relevance[doc][terms_stem[i]] * idf, MAX_DECIMAL_FLOAT)
 		
 		i = i + 1
 
@@ -221,7 +224,7 @@ def printRelevance(relevance):
 		print("\n")
 
 def magnitude(x):
-	return math.sqrt(sum(i**2 for i in x.values()))
+	return round(math.sqrt(sum(i**2 for i in x.values())), MAX_DECIMAL_FLOAT)
 
 def multiplyVectors(a, b):
 	c = a.dot(b)
@@ -242,9 +245,21 @@ def createSimilarity(relevance):
 		if (magnitudeProduct == 0):
 			similarity[doc] = 0
 		else:
-			similarity[doc] = vectorProduct / magnitudeProduct
+			similarity[doc] = round(vectorProduct / magnitudeProduct, MAX_DECIMAL_FLOAT)
 
 	return similarity
+
+def printSimilarity(similarity, files):
+	print("*** Most relevant files for query: ***")
+	print("**** (According to its cosine similarity value) ****")
+	print("")
+
+	orderedSimilarity = OrderedDict(sorted(similarity.items(), key = itemgetter(1), reverse = True))
+	
+	i = 0
+	for orderedResult in orderedSimilarity:
+		print(str(i + 1) + ". File: " + files[orderedResult] + ". Similarity with query: " + str(orderedSimilarity[orderedResult]))
+		i = i + 1
 
 # Entry point:
 
@@ -258,6 +273,5 @@ ids, tokenList = addQueryDocument(ids, tokenList, terms, terms_stem)
 relevance = createRelevanceMatrix(tokenList, ids)
 relevance = calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids)
 relevance = calculateIdfs(relevance, tokenList, terms, terms_stem, ids)
-#printRelevance(relevance)
 similarity = createSimilarity(relevance)
-print(similarity)
+printSimilarity(similarity, files)
