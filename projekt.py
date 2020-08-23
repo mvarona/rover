@@ -6,6 +6,7 @@ import sys
 import ssl
 import nltk
 import math
+import progressbar
 import numpy as np
 from collections import Counter
 from operator import itemgetter
@@ -50,8 +51,6 @@ def show_initial_menu():
 	else:
 		dir_name = sys.argv[1]
 		lan = ensure_input_range("Specify the language of your query (English = 1, German = 2): ", LAN_ENGLISH, LAN_GERMAN)
-		print("Creating inverted index...")
-		print("Please wait...")
 		return dir_name, lan
 
 def get_files_from_dir(dir):
@@ -118,16 +117,20 @@ def create_token_list_for_file(file_name, dir_name, stemmer):
 def create_token_list_for_files(files, dir_name, stemmer, ids):
 	token_list = {}
 	i = 0
-	for file in files:
-		tokenized_file = list(set(create_token_list_for_file(file, dir_name, stemmer)))
+	print("Creating inverted index...")
+	print("Please wait...")
+	with progressbar.ProgressBar(max_value=len(files)) as bar:
+		for file in files:
+			bar.update(i)
+			tokenized_file = list(set(create_token_list_for_file(file, dir_name, stemmer)))
+			
+			for word in tokenized_file:
+				if not token_list.get(word):
+					token_list[word] = []
 
-		for word in tokenized_file:
-			if not token_list.get(word):
-				token_list[word] = []
+				token_list[word].append(list(ids.keys())[i])
 
-			token_list[word].append(list(ids.keys())[i])
-
-		i = i + 1
+			i = i + 1
 	
 	return token_list
 
