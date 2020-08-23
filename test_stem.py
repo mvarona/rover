@@ -4,6 +4,7 @@ import nltk
 import ssl
 import re
 from collections import Counter
+import numpy as np
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -46,5 +47,14 @@ def listFrequencyForFile(file):
 	frequency = Counter(words_lower)
 	return frequency
 
-dict = listFrequencyForFile('corpus-en/test.txt')
-print(dict["data"])
+def multiplyVectors(a, b):
+	c = a.dot(b)
+	return c
+
+l1 = {"a": 1, "b": 0, "c": 0, "d": 1, "e": 0, "f": 0, "g": 0, "h": 0}
+l2 = {"a": 1, "b": 1, "c": 0, "d": 4, "e": 0, "f": 0, "g": 0, "h": 1}
+
+a = np.array(list(l1.values()))
+b = np.array(list(l2.values()))
+c = multiplyVectors(a, b)
+print(c)

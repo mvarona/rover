@@ -6,6 +6,7 @@ import sys
 import ssl
 import nltk
 import math
+import numpy as np
 from collections import Counter
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.stem.snowball import SnowballStemmer
@@ -219,6 +220,32 @@ def printRelevance(relevance):
 			print(str(relevance[doc][term]) + "  ", end='')
 		print("\n")
 
+def magnitude(x):
+	return math.sqrt(sum(i**2 for i in x.values()))
+
+def multiplyVectors(a, b):
+	c = a.dot(b)
+	return c
+
+def createSimilarity(relevance):
+	similarity = {}
+	query = len(relevance) - 1
+
+	for doc in range(0, len(relevance) - 1):
+		similarity[doc] = 0
+
+	for doc in range(0, len(relevance) - 1):
+		queryVector = np.array(list(relevance[query].values()))
+		docVector = np.array(list(relevance[doc].values()))
+		vectorProduct = multiplyVectors(queryVector, docVector)
+		magnitudeProduct = magnitude(relevance[query]) * magnitude(relevance[doc])
+		if (magnitudeProduct == 0):
+			similarity[doc] = 0
+		else:
+			similarity[doc] = vectorProduct / magnitudeProduct
+
+	return similarity
+
 # Entry point:
 
 dirName, lan = showInitialMenu()
@@ -231,4 +258,6 @@ ids, tokenList = addQueryDocument(ids, tokenList, terms, terms_stem)
 relevance = createRelevanceMatrix(tokenList, ids)
 relevance = calculateTfs(relevance, tokenList, terms, terms_stem, dirName, ids)
 relevance = calculateIdfs(relevance, tokenList, terms, terms_stem, ids)
-printRelevance(relevance)
+#printRelevance(relevance)
+similarity = createSimilarity(relevance)
+print(similarity)
