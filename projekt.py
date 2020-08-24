@@ -302,30 +302,36 @@ def print_similarity(ordered_similarity, ids):
 		print(str(i + 1) + ". File: " + ids[ordered_result] + ". Similarity with query: " + str(ordered_similarity[ordered_result]) + ". ID: " + str(ordered_result))
 		i = i + 1
 
+def line_contains_any_term(line, terms):
+	for word in line.split(' '):
+		if (word in terms):
+			return True
+
+	return False
+
 def print_contexts(ordered_similarity, dir_name, files, terms):
-	print("*** Results with context: ***")
+	print("*** Results with context: ***", end='')
 	
 	start_bold = "\033[1m"
 	end_bold = "\033[0;0m"
 	
 	for ordered_result in ordered_similarity:
 		if (ordered_similarity[ordered_result] > 0):
-			print("\nFile  " + files[ordered_result] + ":")
+			print("\n\nFile  " + files[ordered_result] + ":")
 			file = open(dir_name + os.sep + files[ordered_result])		
 
-			for term in terms:
-				lines_with_occurrence = [line.lower() for line in file.readlines() if (line.strip() and term in line.lower())]
-				i = 1
-				for line in lines_with_occurrence:
-					print("")
-					print("\tOccurrence #" + str(i) + ":")
-					print("")
-					for word in line.split(' '):
-						if (term in word):
-							print(start_bold + word + end_bold + " ", end='')
-						else:
-							print(word + " ", end='')
-					i = i + 1
+			lines_with_occurrence = [line.lower() for line in file.readlines() if line_contains_any_term(line.lower(), terms)]
+			i = 1
+			for line in lines_with_occurrence:
+				print("")
+				print("\tOccurrence #" + str(i) + ":")
+				print("")
+				for word in line.split(' '):
+					if (word in terms):
+						print(start_bold + word + end_bold + " ", end='')
+					else:
+						print(word + " ", end='')
+				i = i + 1
 	print("")
 
 def show_end():
