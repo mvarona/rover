@@ -1,10 +1,10 @@
 # Imports and imports-needed constants and functions:
 
-import os
-import re
-import sys
-import math
-import subprocess
+import os # For reading directory
+import re # For regular expressions
+import sys # For launching pip to install other packages
+import math # For math operations
+import subprocess # For launching pip to install other packages
 
 ANSWER_YES_INSTALL = "y"
 ANSWER_NO_INSTALL = "n"
@@ -26,34 +26,34 @@ def install(package):
 		sys.exit(2)
 
 try:
-	import ssl
+	import ssl # For avoiding SSL exception when installing nltk
 except ImportError as e:
 	install("ssl")
 	import ssl
 
 try:
-	import nltk
+	import nltk # For stemming
 except ImportError as e:
 	install("nltk")
 	import nltk
 
 try:
-	import progressbar
+	import progressbar # For progressbar while creating inverted index
 except ImportError as e:
 	install("progressbar")
 	import progressbar
 
 try:
-	import numpy as np
+	import numpy as np # For vectorial operations
 except ImportError as e:
 	install("numpy")
 	import numpy as np
 
-from collections import Counter
-from operator import itemgetter
-from collections import OrderedDict
-from nltk.stem.snowball import SnowballStemmer
-from nltk.tokenize import sent_tokenize, word_tokenize
+from collections import Counter # For getting frecuencies
+from operator import itemgetter # For sorting a dict
+from collections import OrderedDict # For working with a sorted dict
+from nltk.stem.snowball import SnowballStemmer # For snowballing
+from nltk.tokenize import sent_tokenize, word_tokenize # For token creation
 
 # Constants:
 
@@ -62,6 +62,7 @@ LAN_ENGLISH = 1
 LAN_GERMAN = 2
 MINIMUM_LENGTH_TOKEN = 3
 MAX_DECIMAL_FLOAT = 4
+FILES_EXTENSION = ".txt"
 
 # Functions:
 
@@ -99,7 +100,7 @@ def get_files_from_dir(dir):
 	files_cleaned = []
 
 	for file in files:
-		if file.endswith(".txt"):
+		if file.endswith(FILES_EXTENSION):
 			files_cleaned.append(file)
 	
 	return files_cleaned
@@ -114,8 +115,8 @@ def assign_ids_to_each_file(files):
 	return ids
 
 def init_stemmer(lan):
-	# We download here the 'punkt' module for NLTK, instead of asking the user to do on the install
-	# Module ssl and the following try-else block is needed, as the url to download the 'punkt' library throws a SSL exception (caused by its domain certificate)
+	# We download here the 'punkt' module for NLTK, instead of asking the user to do on the install.
+	# The module 'ssl' and the following try-else block is needed, as the url to download the 'punkt' library throws a SSL exception (caused by its domain certificate)
 
 	try:
 		_create_unverified_https_context = ssl._create_unverified_context
@@ -137,20 +138,20 @@ def stem_sentence(sentence, stemmer):
 	token_words = word_tokenize(sentence)
 	stem_sentence = []
 	for word in token_words:
-		if (len(word) > MINIMUM_LENGTH_TOKEN):
-			if word not in stem_sentence:
+		if (len(word) > MINIMUM_LENGTH_TOKEN): # Basic criterion for stop words
+			if word not in stem_sentence: # Garantees uniqueness for word per sentence
 				stem_sentence.append(stemmer.stem(word))
 	
 	return stem_sentence
 
 def create_token_list_for_file(file_name, dir_name, stemmer):
 
-	file = open(dir_name + os.sep + file_name)
-	my_lines_list = [line.lower() for line in file.readlines() if line.strip()]
+	file = open(dir_name + os.sep + file_name) # os.sep = multiplatform "/"
+	file_lines = [line.lower() for line in file.readlines() if line.strip()] # Discards empty lines
 	tokenized_stemmed_file = []
 	i = 0
-	for line in my_lines_list:
-		tokenized_stemmed_file.extend(stem_sentence(my_lines_list[i], stemmer))
+	for line in file_lines:
+		tokenized_stemmed_file.extend(stem_sentence(file_lines[i], stemmer))
 		i = i + 1
 
 	return tokenized_stemmed_file
@@ -163,13 +164,13 @@ def create_token_list_for_files(files, dir_name, stemmer, ids):
 	with progressbar.ProgressBar(max_value=len(files)) as bar:
 		for file in files:
 			bar.update(i)
-			tokenized_file = list(set(create_token_list_for_file(file, dir_name, stemmer)))
+			tokenized_file = list(set(create_token_list_for_file(file, dir_name, stemmer))) # Set avoids duplicate tokens
 			
 			for word in tokenized_file:
 				if not token_list.get(word):
 					token_list[word] = []
 
-				token_list[word].append(list(ids.keys())[i])
+				token_list[word].append(list(ids.keys())[i]) # Adds document ID to the stemmed words it has
 
 			i = i + 1
 	
@@ -177,23 +178,59 @@ def create_token_list_for_files(files, dir_name, stemmer, ids):
 
 def list_frequency_for_file(dir_name, file, is_query):
 	words = []
+	
 	if (is_query == True):
-		words = re.findall(r'\w+', file)
+	# The query is not a file, so we don't have to open any. We just pass the query into the file parameter, and we indicate the case with the flag to True
+		words = re.findall(r'\w+', file) # Regular expression to find all words
+	
 	else:
 		with open(dir_name + os.sep + file) as f:
 		    passage = f.read().lower()
 		words = re.findall(r'\w+', passage)
 
-	words_lower = [word for word in words if (len(word) > MINIMUM_LENGTH_TOKEN)]
-	frequency = Counter(words_lower)
+	words_lower = [word for word in words if (len(word) > MINIMUM_LENGTH_TOKEN)] # Filters stop words
+	frequency = Counter(words_lower) # Counter returns a dictionary as following: {"word": frecuency,...}, sorted from highest frequency
+
 	return frequency
 
 def create_search_terms(stemmer):
 	terms = ensure_string("Specify your search terms with a space ( ) as separator: ").lower().split(" ")
 	terms_stem = []
 	for term in terms:
-		terms_stem.append(stemmer.stem(term))
+		terms_stem.append(stemmer.stem(term)) # Stems query terms
 	return terms, terms_stem
+
+def add_query_document(ids, token_list, terms, terms_stem):
+	new_key = max(list(ids.keys())) + 1 # Query is represented as last document (next ID)
+	ids[new_key] = ("Query (" + ' '.join(terms) + ")") # Query is represented on the filename of the last document
+
+	# Update token_list to reflect the new document (query):
+
+	for term in terms_stem:
+		if (term not in token_list):
+			token_list[term] = []
+		token_list[term].append(new_key)
+
+	return ids, token_list
+
+def create_relevance_matrix(token_list, ids):
+
+	# relevance is a dictionary of dictionaries, in the following way:
+	# { "id_doc_1": { "term_1": Tf-Idf, ... }, ... }
+
+	relevance = dict()
+	for doc in ids:
+		relevance[doc] = dict()
+		for term in token_list:
+			relevance[doc][term] = 0
+	return relevance
+
+def print_relevance(relevance):
+	for doc in range(0, len(relevance)):
+		print("Document " + str(doc) + ":")
+		for term in relevance[0]:
+			print(str(relevance[doc][term]) + "  ", end='') # end='' avoids new line for following print
+		print("\n")
 
 def calculate_tf_for_file(term, dir_name, file, is_query):
 	word_frequencies = list_frequency_for_file(dir_name, file, is_query)
@@ -213,7 +250,7 @@ def calculate_tfs(relevance, token_list, terms, terms_stem, dir_name, ids):
 			for file_with_term in files_with_term:
 				file = ids[file_with_term]
 				is_query = False
-				if (file_with_term == max(list(ids.keys()))):
+				if (file_with_term == max(list(ids.keys()))): # Query is represented as last document (highest ID)
 					is_query = True
 				relevance[file_with_term][terms_stem[i]] = calculate_tf_for_file(term, dir_name, file, is_query)
 
@@ -236,32 +273,6 @@ def calculate_idfs(relevance, token_list, terms, terms_stem, ids):
 
 	return relevance
 
-def add_query_document(ids, token_list, terms, terms_stem):
-	new_key = max(list(ids.keys())) + 1
-	ids[new_key] = ("Query (" + ' '.join(terms) + ")")
-
-	for term in terms_stem:
-		if (term not in token_list):
-			token_list[term] = []
-		token_list[term].append(new_key)
-
-	return ids, token_list
-
-def create_relevance_matrix(token_list, ids):
-	relevance = dict()
-	for doc in ids:
-		relevance[doc] = dict()
-		for term in token_list:
-			relevance[doc][term] = 0
-	return relevance
-
-def print_relevance(relevance):
-	for doc in range(0, len(relevance)):
-		print("Document " + str(doc) + ":")
-		for term in relevance[0]:
-			print(str(relevance[doc][term]) + "  ", end='')
-		print("\n")
-
 def magnitude(x):
 	return round(math.sqrt(sum(i**2 for i in x.values())), MAX_DECIMAL_FLOAT)
 
@@ -271,17 +282,19 @@ def multiply_vectors(a, b):
 
 def create_similarity(relevance):
 	similarity = {}
-	query = len(relevance) - 1
+	query = len(relevance) - 1 # Location of query vector in relevance (last vector of matrix)
 
 	for doc in range(0, len(relevance) - 1):
 		similarity[doc] = 0
 
+	# Calculate cosine similarity between query and each document:
+
 	for doc in range(0, len(relevance) - 1):
-		query_vector = np.array(list(relevance[query].values()))
-		doc_vector = np.array(list(relevance[doc].values()))
+		query_vector = np.array(list(relevance[query].values())) # Creates query vector with its values
+		doc_vector = np.array(list(relevance[doc].values())) # Creates doc vector with its values
 		vector_product = multiply_vectors(query_vector, doc_vector)
 		magnitude_product = magnitude(relevance[query]) * magnitude(relevance[doc])
-		if (magnitude_product == 0):
+		if (magnitude_product == 0): # Avoids dividing-by-0 exception
 			similarity[doc] = 0
 		else:
 			similarity[doc] = round(vector_product / magnitude_product, MAX_DECIMAL_FLOAT)
@@ -289,6 +302,8 @@ def create_similarity(relevance):
 	return similarity
 
 def order_similarity(similarity):
+	# Returns an OrderedDict with docs sorted by highest similarity:
+
 	ordered_similarity = OrderedDict(sorted(similarity.items(), key = itemgetter(1), reverse = True))
 	return ordered_similarity
 
@@ -303,6 +318,8 @@ def print_similarity(ordered_similarity, ids):
 		i = i + 1
 
 def line_contains_any_term(line, terms):
+	# Checks if the line (passed as a string) contains any of the query terms:
+
 	for word in line.split(' '):
 		if (word in terms):
 			return True
@@ -310,23 +327,24 @@ def line_contains_any_term(line, terms):
 	return False
 
 def print_contexts(ordered_similarity, dir_name, files, terms):
-	print("*** Results with context: ***", end='')
+	print("*** Results with context: ***")
+	print("**** (For files with a cosine similarity greater than zero) ****", end='')
 	
-	start_bold = "\033[1m"
-	end_bold = "\033[0;0m"
+	start_bold = "\033[1m" # Marks the beginning of a word in bold font
+	end_bold = "\033[0;0m" # Marks the end of a word in bold font
 	
 	for ordered_result in ordered_similarity:
 		if (ordered_similarity[ordered_result] > 0):
 			print("\n\nFile  " + files[ordered_result] + ":")
-			file = open(dir_name + os.sep + files[ordered_result])		
+			file = open(dir_name + os.sep + files[ordered_result])
 
-			lines_with_occurrence = [line.lower() for line in file.readlines() if line_contains_any_term(line.lower(), terms)]
+			lines_with_occurrence = [line.lower() for line in file.readlines() if line_contains_any_term(line.lower(), terms)] # Adds lines which contain any query term
 			i = 1
 			for line in lines_with_occurrence:
 				print("")
 				print("\tOccurrence #" + str(i) + ":")
 				print("")
-				for word in line.split(' '):
+				for word in line.split(' '): # Highlights terms within contexts:
 					if (word in terms):
 						print(start_bold + word + end_bold + " ", end='')
 					else:
