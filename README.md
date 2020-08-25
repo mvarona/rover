@@ -88,7 +88,7 @@ where each `id` is the vector which represents each document, and each `term` ho
 
 <pre>
 
-document ↓			 terms →
+document ↓		  terms →
 			 first term			 second term			 ...
 0			 value_a			 value_a2			 ...
 1			 value_b			 value_b2			 ...
@@ -101,4 +101,4 @@ query			 value_n			 value_n2			 ...
 
 Here we have an image showing the working of the program:
 
-<img src="example.png" alt="Search engine working" width="900"/>
+<img src="example.png" alt="Search engine working" width="1000"/>
