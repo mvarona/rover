@@ -44,7 +44,7 @@ except ImportError as e:
 	import progressbar
 
 try:
-	import numpy as np # For vectorial operations
+	import numpy as np # For vector operations
 except ImportError as e:
 	install("numpy")
 	import numpy as np
