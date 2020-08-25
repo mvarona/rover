@@ -14,7 +14,7 @@ Search engine written on Python based on an inverted index structure with the fo
 - It uses a structure to quickly go from the Document ID to the correspondent file
 - It calculates the Tf for each pair of query term and document
 - It calculates the Idf for each query term
-- It creates a relevance matrix (as shown on Figures), which puts together each term and document according their TF-IDF value
+- It creates a relevance matrix (as shown on Figures), which puts together each term and document according to their Tf-Idf value
 - It sorts the results based on the similarity between the files and the query
 - It shows the context for each occurence of each query term
 
@@ -27,7 +27,7 @@ The script is coded on Python 3 and it uses the following external libraries:
 - numpy, for vector operations
 - ssl, for avoiding an exception during the download of the 'punkt' module for nltk
 
-The program will try to install the packages if they are not already and the user allows it, but they can be also installed with the following commands:
+The program will try to install the packages if they are not already installed and the user allows it, but they can be also installed with the following commands:
 
 ### Unix
 
@@ -43,13 +43,14 @@ The program will try to install the packages if they are not already and the use
 - ssl:
 `pip install ssl`
 
+
 ## Usage
 
-`python3 projekt.py corpus`, where `corpus` is the directory where the search will be done.
+Run `python3 projekt.py corpus`, where `corpus` is the directory where the search will be done.
 
 ## Figures
 
-- `ids` is the structure which garantess a quick hashed access to each file, and it is a dictionary with the following aspect:
+- `ids` is the structure which guarantees a quick hashed access to each file, and it is a dictionary with the following aspect:
 
 ```
 {
@@ -83,7 +84,9 @@ where each `stemmed_term` is the result of applying the stemming process to each
 }
 ```
 
-where each `id` is the vector which represents each document, and each `term` hold correspondent value for itself on that document. More visually, the matrix would have this shape:
+where each `id` is the vector which represents each document, and each `term` holds its correspondent value on that document. More visually, the matrix would have this shape:
+
+<pre>
 
 document ↓	  terms →
 			first term 		second term 	...
@@ -92,8 +95,10 @@ document ↓	  terms →
 ...			 value_...		 value_...2		...
 query		 value_n		 value_n2		...
 
+</pre>
+
 ## Example
 
 Here we have an image showing the working of the program:
 
-<img src="example.png" alt="Search engine working" width="600"/>
+<img src="example.png" alt="Search engine working" width="900"/>
