@@ -43,7 +43,8 @@ The program will try to install the packages if they are not already installed a
 - ssl:
 `pip install ssl`
 
-## Usage
+
+## Usage
 
 Run `python3 projekt.py corpus`, where `corpus` is the directory where the search will be done.
 
@@ -96,7 +97,7 @@ query			 value_n			 value_n2			 ...
 
 </pre>
 
-## Example
+## Example
 
 Here we have an image showing the working of the program:
 
