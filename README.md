@@ -12,8 +12,8 @@ Search engine written on Python based on an inverted index structure with the fo
 - It stems the terms to get a closer sense to the meaning of the expressions
 - It supports Snowballing technique for English and German languages
 - It uses a structure to quickly go from the Document ID to the correspondent file
-- It calculates the Tf for each pair of query term and document
-- It calculates the Idf for each query term
+- It calculates and shows the Tf for each pair of query term and document
+- It calculates and shows the Idf for each query term
 - It creates a relevance matrix (as shown on Figures), which puts together each term and document according to their Tf-Idf value
 - It sorts the results based on the similarity between the files and the query
 - It shows the context for each occurence of each query term
