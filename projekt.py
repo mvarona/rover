@@ -240,9 +240,13 @@ def calculate_tf_for_file(term, dir_name, file, is_query):
 	return tf
 
 def calculate_tfs(relevance, token_list, terms, terms_stem, dir_name, ids):
+	print("\n*** TFs for each search term and file: ***")
+
 	i = 0
 
 	for term in terms:
+
+		print("\tTerm '" + term + "':")
 		
 		if (terms_stem[i] in token_list):
 			files_with_term = token_list[terms_stem[i]]
@@ -254,18 +258,26 @@ def calculate_tfs(relevance, token_list, terms, terms_stem, dir_name, ids):
 					is_query = True
 				relevance[file_with_term][terms_stem[i]] = calculate_tf_for_file(term, dir_name, file, is_query)
 
+				print("\t\tFile " + file + ": " + str(relevance[file_with_term][terms_stem[i]]))
+
 		i = i + 1
 
 	return relevance
 
 def calculate_idfs(relevance, token_list, terms, terms_stem, ids):
+	print("\n*** IDFs for each search term: ***")
+
 	i = 0
 	num_docs = len(ids)
 	for term in terms:
+
 		if (terms_stem[i] in token_list):
 			files_with_term = token_list[terms_stem[i]]
 			num_files_with_term = len(files_with_term)
-			idf = math.log(num_docs / num_files_with_term)
+			idf = round(math.log(num_docs / num_files_with_term), MAX_DECIMAL_FLOAT)
+
+			print("\tTerm '" + term + "': " + str(idf))
+
 			for doc in range(0, num_docs):
 				relevance[doc][terms_stem[i]] = round(relevance[doc][terms_stem[i]] * idf, MAX_DECIMAL_FLOAT)
 		
@@ -308,7 +320,7 @@ def order_similarity(similarity):
 	return ordered_similarity
 
 def print_similarity(ordered_similarity, ids):
-	print("*** Most relevant files for query: ***")
+	print("\n*** Most relevant files for query: ***")
 	print("**** (According to its cosine similarity value) ****")
 	print("")
 
@@ -327,7 +339,7 @@ def line_contains_any_term(line, terms):
 	return False
 
 def print_contexts(ordered_similarity, dir_name, files, terms):
-	print("*** Results with context: ***")
+	print("\n*** Results with context: ***")
 	print("**** (For files with a cosine similarity greater than zero) ****", end='')
 	
 	start_bold = "\033[1m" # Marks the beginning of a word in bold font
