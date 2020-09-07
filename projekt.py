@@ -40,7 +40,7 @@ except ImportError as e:
 try:
 	import progressbar # For progressbar while creating inverted index
 except ImportError as e:
-	install("progressbar")
+	install("progressbar2")
 	import progressbar
 
 try:
